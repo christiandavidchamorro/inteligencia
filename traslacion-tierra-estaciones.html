@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Traslación y Estaciones</title>
+<meta name="description" content="Presentación interactiva para Secundaria sobre el movimiento de traslación de la Tierra y el origen de las cuatro estaciones del año.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #eef3fb;
+    --surface: #ffffff;
+    --surface-2: #f6f9fe;
+    --sky: #eaf2ff;
+    --line: #e1e8f3;
+    --text: #1b2539;
+    --muted: #5b6880;
+    --primary: #2563eb;
+    --primary-soft: #e3ecff;
+    --sun: #f59e0b;
+    --sun-soft: #fff3d6;
+    --spring: #16a34a;
+    --spring-soft: #dcfce7;
+    --summer: #ea580c;
+    --summer-soft: #ffedd5;
+    --autumn: #b45309;
+    --autumn-soft: #fdf0dc;
+    --winter: #0284c7;
+    --winter-soft: #e0f2fe;
+    --ok: #15803d;
+    --ok-soft: #dcfce7;
+    --bad: #dc2626;
+    --bad-soft: #fee2e2;
+    --radius: 18px;
+    --shadow: 0 20px 50px -24px rgba(30, 58, 120, .28), 0 2px 6px rgba(30, 58, 120, .06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #fff7e6 0%, transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, #e3ecff 0%, transparent 60%),
+      var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+    padding: 28px 16px;
+  }
+
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid #93b4ff; outline-offset: 2px; border-radius: 8px; }
+
+  /* ---------- Contenedor ---------- */
+  .deck {
+    max-width: 1180px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 26px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .deck-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand-icon {
+    width: 44px; height: 44px; border-radius: 14px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--sun-soft), var(--primary-soft));
+    color: var(--primary); font-size: 20px; flex-shrink: 0;
+  }
+  .brand small { display: block; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  .brand strong { font-size: 16px; font-weight: 800; }
+
+  .slide-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px 7px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    transition: background .2s, border-color .2s, color .2s;
+  }
+  .tab .num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--surface-2); font-weight: 800; font-size: 13px;
+    transition: background .2s, color .2s;
+  }
+  .tab:hover { border-color: #bcd0f5; color: var(--text); }
+  .tab.done .num { background: var(--primary-soft); color: var(--primary); }
+  .tab[aria-selected="true"] { background: var(--primary-soft); border-color: #bcd0f5; color: var(--primary); }
+  .tab[aria-selected="true"] .num { background: var(--primary); color: #fff; }
+
+  .progress { height: 5px; background: var(--surface-2); }
+  .progress-bar {
+    height: 100%; width: 25%;
+    background: linear-gradient(90deg, var(--sun), var(--primary));
+    border-radius: 0 6px 6px 0;
+    transition: width .45s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  /* ---------- Diapositivas ---------- */
+  .stage { position: relative; }
+  .slide { display: none; padding: 30px 28px 34px; }
+  .slide.active { display: block; animation: enter .45s cubic-bezier(.4, 0, .2, 1); }
+  .slide.active.from-left { animation-name: enter-left; }
+  @keyframes enter { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+  @keyframes enter-left { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+
+  .slide-head { margin-bottom: 22px; max-width: 820px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--primary); background: var(--primary-soft);
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 12px;
+  }
+  .slide-head h1 { font-size: clamp(24px, 3.4vw, 36px); line-height: 1.15; font-weight: 800; letter-spacing: -.02em; }
+  .slide-head p { color: var(--muted); margin-top: 8px; font-size: clamp(15px, 1.6vw, 17px); }
+
+  .grid-2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+
+  /* ---------- Panel visual ---------- */
+  .visual {
+    background: linear-gradient(180deg, var(--sky), #f7faff);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .visual-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .visual-title h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .visual-title h2 i { color: var(--primary); }
+  .visual svg { width: 100%; height: auto; display: block; }
+  .note { font-size: 12.5px; color: var(--muted); margin-top: 8px; display: flex; gap: 6px; align-items: flex-start; }
+  .note i { margin-top: 3px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 9px 16px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--surface);
+    font-weight: 700; font-size: 14px;
+    transition: transform .15s, background .2s, border-color .2s, box-shadow .2s;
+  }
+  .btn:hover { border-color: #bcd0f5; box-shadow: 0 4px 12px -6px rgba(37, 99, 235, .35); }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+  .range { display: flex; align-items: center; gap: 10px; flex: 1 1 200px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .range input { flex: 1; accent-color: var(--primary); min-width: 80px; }
+  .range output { min-width: 58px; text-align: right; color: var(--text); font-weight: 700; }
+
+  .segmented { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+  .segmented button {
+    border: 0; background: transparent; padding: 7px 12px; border-radius: 9px;
+    font-size: 13px; font-weight: 700; color: var(--muted);
+  }
+  .segmented button[aria-pressed="true"] { background: var(--primary); color: #fff; }
+
+  .readouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .readout span { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .readout strong { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Tarjetas ---------- */
+  .cards { display: grid; gap: 14px; }
+  .card {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -14px rgba(30, 58, 120, .35); }
+  .card-icon {
+    width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 18px;
+    background: var(--primary-soft); color: var(--primary);
+  }
+  .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .card p { font-size: 14px; color: var(--muted); }
+  .key { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -.01em; display: block; line-height: 1.25; }
+  .key small { font-size: 13px; font-weight: 600; color: var(--muted); }
+  mark { background: var(--sun-soft); color: #8a5300; padding: 0 4px; border-radius: 5px; font-weight: 700; }
+
+  .ic-sun { background: var(--sun-soft); color: #c27803; }
+  .ic-green { background: var(--spring-soft); color: var(--spring); }
+  .ic-orange { background: var(--summer-soft); color: var(--summer); }
+  .ic-brown { background: var(--autumn-soft); color: var(--autumn); }
+  .ic-blue { background: var(--winter-soft); color: var(--winter); }
+  .ic-red { background: var(--bad-soft); color: var(--bad); }
+
+  .callout {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--sun-soft); border: 1px solid #fbe0a3;
+    border-radius: var(--radius); padding: 14px 16px; font-size: 14px; color: #6b4300;
+  }
+  .callout i { font-size: 18px; margin-top: 2px; color: #c27803; }
+  .callout strong { color: #573600; }
+
+  /* ---------- Diapositiva 3 ---------- */
+  .orbit-pos { cursor: pointer; }
+  .orbit-pos .ring { opacity: 0; transition: opacity .2s; }
+  .orbit-pos:hover .ring { opacity: .45; }
+  .orbit-pos.selected .ring { opacity: 1; }
+
+  .hemi-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .hemi {
+    border-radius: var(--radius); padding: 14px; border: 2px solid var(--line); background: var(--surface);
+    transition: border-color .25s, background .25s;
+  }
+  .hemi.focus { border-color: var(--primary); }
+  .hemi .lbl { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .hemi .season { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 8px; margin: 4px 0 2px; }
+  .hemi p { font-size: 13.5px; color: var(--muted); }
+
+  .pos-title { display: flex; align-items: center; gap: 12px; }
+  .pos-title .card-icon { width: 48px; height: 48px; }
+  .pos-title h3 { font-size: 19px; font-weight: 800; }
+  .pos-title span { color: var(--muted); font-weight: 600; font-size: 14px; }
+
+  .facts { list-style: none; display: grid; gap: 8px; }
+  .facts li { display: flex; gap: 10px; font-size: 14px; color: var(--muted); align-items: flex-start; }
+  .facts li i { color: var(--primary); margin-top: 4px; width: 16px; text-align: center; }
+  .facts li strong { color: var(--text); }
+
+  /* ---------- Diapositiva 4 ---------- */
+  .timeline { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px 18px; margin-bottom: 22px; }
+  .tl-months { display: grid; grid-template-columns: repeat(12, 1fr); font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; margin-bottom: 6px; }
+  .tl-row { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .tl-row > span { font-size: 11.5px; font-weight: 800; color: var(--muted); }
+  .tl-band { position: relative; height: 26px; border-radius: 8px; overflow: hidden; display: flex; }
+  .tl-band div { height: 100%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; }
+  .s-pri { background: var(--spring); } .s-ver { background: var(--summer); } .s-oto { background: var(--autumn); } .s-inv { background: var(--winter); }
+  .tl-markers { position: relative; height: 40px; margin-left: 42px; }
+  .tl-marker {
+    position: absolute; top: 4px; transform: translateX(-50%);
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 2px solid var(--line); background: var(--surface);
+    display: grid; place-items: center; font-size: 13px; color: var(--primary);
+    transition: transform .15s, border-color .2s, background .2s;
+  }
+  .tl-marker:hover { transform: translateX(-50%) scale(1.1); }
+  .tl-marker[aria-pressed="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tl-marker.sun { color: #c27803; }
+  .tl-info { display: flex; gap: 12px; align-items: flex-start; background: var(--surface-2); border-radius: 12px; padding: 12px 14px; font-size: 14px; color: var(--muted); min-height: 66px; }
+  .tl-info strong { color: var(--text); display: block; }
+
+  .quiz { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  .quiz-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .quiz-top h2 { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .quiz-top h2 i { color: var(--primary); }
+  .score { font-size: 13px; font-weight: 700; background: var(--primary-soft); color: var(--primary); padding: 5px 12px; border-radius: 999px; }
+  .q-steps { display: flex; gap: 6px; margin-bottom: 14px; }
+  .q-steps span { flex: 1; height: 6px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); }
+  .q-steps span.ok { background: var(--ok); border-color: var(--ok); }
+  .q-steps span.bad { background: var(--bad); border-color: var(--bad); }
+  .q-steps span.cur { background: #bcd0f5; border-color: #bcd0f5; }
+  .q-text { font-size: 17px; font-weight: 700; margin-bottom: 12px; }
+  .options { display: grid; gap: 8px; }
+  .option {
+    text-align: left; display: flex; gap: 12px; align-items: center;
+    padding: 11px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface);
+    font-size: 14.5px; font-weight: 600; transition: border-color .2s, background .2s;
+  }
+  .option .letter { width: 28px; height: 28px; border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
+  .option:hover:not(:disabled) { border-color: #93b4ff; background: #f7faff; }
+  .option:disabled { cursor: default; }
+  .option.correct { border-color: var(--ok); background: var(--ok-soft); }
+  .option.correct .letter { background: var(--ok); color: #fff; }
+  .option.wrong { border-color: var(--bad); background: var(--bad-soft); }
+  .option.wrong .letter { background: var(--bad); color: #fff; }
+  .feedback { margin-top: 12px; padding: 12px 14px; border-radius: 12px; font-size: 14px; display: none; gap: 10px; align-items: flex-start; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: var(--ok-soft); color: #14532d; }
+  .feedback.bad { background: var(--bad-soft); color: #7f1d1d; }
+  .feedback i { margin-top: 3px; }
+  .quiz-actions { display: flex; justify-content: flex-end; margin-top: 12px; gap: 8px; }
+  .result { text-align: center; padding: 18px 6px; }
+  .result .big { font-size: 46px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result p { color: var(--muted); margin: 8px 0 16px; }
+
+  /* ---------- Pie ---------- */
+  .deck-footer {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 16px 28px; border-top: 1px solid var(--line); background: var(--surface-2);
+  }
+  .dots { display: flex; gap: 8px; align-items: center; }
+  .dot { width: 10px; height: 10px; border-radius: 999px; border: 0; background: #cdd8ea; transition: width .3s, background .3s; padding: 0; }
+  .dot.active { width: 28px; background: var(--primary); }
+  .counter { font-size: 13px; font-weight: 700; color: var(--muted); }
+  .footer-mid { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+  .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- Responsivo ---------- */
+  @media (max-width: 960px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .tab .txt { display: none; }
+    .tab { padding: 4px; }
+  }
+  @media (max-width: 600px) {
+    body { padding: 12px 0; }
+    .deck { border-radius: 18px; margin: 0 8px; }
+    .deck-header, .slide, .deck-footer { padding-left: 16px; padding-right: 16px; }
+    .slide { padding-top: 22px; padding-bottom: 24px; }
+    .readouts { grid-template-columns: 1fr 1fr; }
+    .readouts .readout:last-child { grid-column: span 2; }
+    .hemi-cards { grid-template-columns: 1fr; }
+    .btn-nav .txt { display: none; }
+    .btn-nav { padding: 10px 14px; }
+    .tl-band div { font-size: 0; }
+    .tl-months span:nth-child(even) { visibility: hidden; }
+    .visual { padding: 12px; }
+    .key { font-size: 20px; }
+    .tl-marker { width: 24px; height: 24px; font-size: 11px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<svg class="svg-defs" aria-hidden="true" focusable="false">
+  <defs>
+              <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fff7cc"/>
+                <stop offset="55%" stop-color="#fcd34d"/>
+                <stop offset="100%" stop-color="#f59e0b"/>
+              </radialGradient>
+              <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fde68a" stop-opacity=".75"/>
+                <stop offset="100%" stop-color="#fde68a" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="earthGrad" cx="35%" cy="35%" r="70%">
+                <stop offset="0%" stop-color="#7cc4ff"/>
+                <stop offset="100%" stop-color="#1d6fd8"/>
+              </radialGradient>
+              <marker id="arrowHead" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#93a8cc"/>
+              </marker>
+            
+              <clipPath id="earthClip"><circle cx="340" cy="180" r="112"/></clipPath>
+              <radialGradient id="earthGrad2" cx="40%" cy="40%" r="75%">
+                <stop offset="0%" stop-color="#8fd0ff"/>
+                <stop offset="100%" stop-color="#2271dc"/>
+              </radialGradient>
+              <marker id="rayHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/>
+              </marker>
+            </defs>
+</svg>
+
+<main class="deck" aria-roledescription="presentación" aria-label="La traslación de la Tierra y las cuatro estaciones">
+  <header class="deck-header">
+    <div class="brand">
+      <div class="brand-icon"><i class="fa-solid fa-earth-americas"></i></div>
+      <div>
+        <small>Ciencias · Secundaria</small>
+        <strong>Traslación y estaciones del año</strong>
+      </div>
+    </div>
+    <nav class="slide-tabs" role="tablist" aria-label="Diapositivas">
+      <button class="tab" role="tab" data-go="0" aria-selected="true" aria-controls="s0"><span class="num">1</span><span class="txt">Traslación</span></button>
+      <button class="tab" role="tab" data-go="1" aria-selected="false" aria-controls="s1"><span class="num">2</span><span class="txt">El eje inclinado</span></button>
+      <button class="tab" role="tab" data-go="2" aria-selected="false" aria-controls="s2"><span class="num">3</span><span class="txt">Las estaciones</span></button>
+      <button class="tab" role="tab" data-go="3" aria-selected="false" aria-controls="s3"><span class="num">4</span><span class="txt">Repaso</span></button>
+    </nav>
+  </header>
+  <div class="progress" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+
+  <div class="stage">
+
+    <!-- =================== DIAPOSITIVA 1 =================== -->
+    <section class="slide active" id="s0" role="tabpanel" aria-roledescription="diapositiva" aria-label="1 de 4">
+      <div class="slide-head">
+        <span class="eyebrow"><i class="fa-solid fa-rotate"></i> Diapositiva 1 · El movimiento</span>
+        <h1>¿Qué es el movimiento de traslación?</h1>
+        <p>Es el viaje que realiza la Tierra alrededor del Sol siguiendo una trayectoria llamada <strong>órbita</strong>. Una vuelta completa equivale a <strong>un año</strong>.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="visual">
+          <div class="visual-title">
+            <h2><i class="fa-solid fa-satellite"></i> Simulador de la órbita terrestre</h2>
+          </div>
+          <svg id="orbitSvg" viewBox="0 0 600 340" role="img" aria-label="La Tierra girando alrededor del Sol en una órbita elíptica">
+            <g id="orbitBack"></g>
+            <g id="sunLayer"></g>
+            <g id="orbitFront"></g>
+          </svg>
+          <div class="readouts" aria-live="polite">
+            <div class="readout"><span><i class="fa-regular fa-calendar"></i> Fecha</span><strong id="roDate">3 de enero</strong></div>
+            <div class="readout"><span><i class="fa-solid fa-ruler-horizontal"></i> Distancia al Sol</span><strong id="roDist">147,1 M km</strong></div>
+            <div class="readout"><span><i class="fa-solid fa-gauge-high"></i> Velocidad</span><strong id="roVel">30,3 km/s</strong></div>
+          </div>
+          <div class="controls">
+            <button class="btn btn-primary" id="playBtn" aria-pressed="true"><i class="fa-solid fa-pause"></i><span>Pausar</span></button>
+            <button class="btn" id="resetBtn"><i class="fa-solid fa-rotate-left"></i> Reiniciar</button>
+            <label class="range">
+              <i class="fa-solid fa-forward"></i> Velocidad
+              <input type="range" id="speedRange" min="5" max="120" value="40" aria-label="Días simulados por segundo">
+              <output id="speedOut">40 d/s</output>
+            </label>
+          </div>
+          <p class="note"><i class="fa-solid fa-circle-info"></i> El achatamiento de la órbita está exagerado para que se note. La órbita real es casi un círculo, pero los datos de distancia y velocidad son reales.</p>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div>
+              <h3>Duración de una vuelta</h3>
+              <span class="key">365 días y 6 h <small>aprox.</small></span>
+              <p>Esas 6 horas extra se acumulan: cada 4 años se suma un día (29 de febrero) y tenemos un <mark>año bisiesto</mark>.</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-orange"><i class="fa-solid fa-gauge-high"></i></div>
+            <div>
+              <h3>Velocidad orbital</h3>
+              <span class="key">≈ 107 000 km/h</span>
+              <p>Unos 30 km cada segundo. No la sentimos porque viajamos junto con la Tierra, la atmósfera y todo lo que nos rodea.</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-sun"><i class="fa-solid fa-sun"></i></div>
+            <div>
+              <h3>Distancia media al Sol</h3>
+              <span class="key">150 millones de km</span>
+              <p>La luz del Sol tarda unos <strong>8 minutos y 20 segundos</strong> en llegar hasta nosotros.</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-green"><i class="fa-regular fa-circle"></i></div>
+            <div>
+              <h3>Órbita elíptica</h3>
+              <p>El punto más cercano al Sol es el <strong>perihelio</strong> (≈ 3 de enero, 147 M km) y el más lejano, el <strong>afelio</strong> (≈ 4 de julio, 152 M km).</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== DIAPOSITIVA 2 =================== -->
+    <section class="slide" id="s1" role="tabpanel" aria-roledescription="diapositiva" aria-label="2 de 4" hidden>
+      <div class="slide-head">
+        <span class="eyebrow"><i class="fa-solid fa-compass-drafting"></i> Diapositiva 2 · La causa</span>
+        <h1>El eje inclinado: la verdadera causa de las estaciones</h1>
+        <p>El eje de la Tierra está inclinado <strong>23,5°</strong> y siempre apunta en la misma dirección mientras viajamos alrededor del Sol. Por eso cada hemisferio recibe los rayos solares de forma distinta según la época del año.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="visual">
+          <div class="visual-title">
+            <h2><i class="fa-solid fa-flask"></i> Laboratorio de inclinación</h2>
+            <div class="segmented" role="group" aria-label="Momento del año">
+              <button data-dec="1" aria-pressed="true">21 de junio</button>
+              <button data-dec="0" aria-pressed="false">Equinoccio</button>
+              <button data-dec="-1" aria-pressed="false">21 de diciembre</button>
+            </div>
+          </div>
+          <svg id="tiltSvg" viewBox="0 0 540 360" role="img" aria-label="La Tierra iluminada por el Sol con su eje inclinado">
+            <!-- Sol (borde) -->
+            <circle cx="-40" cy="180" r="120" fill="url(#sunGlow)"/>
+            <circle cx="-60" cy="180" r="100" fill="url(#sunGrad)"/>
+            <text x="12" y="40" font-size="13" font-weight="700" fill="#b45309">Rayos del Sol</text>
+            <g id="rays"></g>
+            <!-- Tierra -->
+            <g clip-path="url(#earthClip)">
+              <circle cx="340" cy="180" r="112" fill="url(#earthGrad2)"/>
+              <g id="tiltGroupInner"></g>
+              <path d="M340,68 A112,112 0 0 1 340,292 Z" fill="#0f1c3d" opacity=".5"/>
+            </g>
+            <circle cx="340" cy="180" r="112" fill="none" stroke="#1d4ed8" stroke-width="2"/>
+            <g id="tiltGroupOuter"></g>
+            <circle id="subsolar" cx="228" cy="180" r="7" fill="#fde047" stroke="#b45309" stroke-width="2"/>
+            <text x="470" y="40" font-size="12" font-weight="700" fill="#475569" text-anchor="middle">Lado de noche</text>
+            <text x="250" y="345" font-size="12" font-weight="700" fill="#b45309" text-anchor="middle" id="subsolarLabel">Sol cenital: 23,5° N</text>
+          </svg>
+          <div class="controls">
+            <label class="range" style="flex-basis:100%">
+              <i class="fa-solid fa-arrows-rotate"></i> Inclinación del eje
+              <input type="range" id="tiltRange" min="0" max="45" step="0.5" value="23.5" aria-label="Inclinación del eje en grados">
+              <output id="tiltOut">23,5°</output>
+            </label>
+            <button class="btn" id="tiltReal"><i class="fa-solid fa-earth-americas"></i> Valor real (23,5°)</button>
+            <button class="btn" id="tiltZero"><i class="fa-solid fa-ban"></i> Sin inclinación (0°)</button>
+          </div>
+          <div class="readouts" aria-live="polite">
+            <div class="readout"><span>Día a 40° N</span><strong id="dayN">15 h 0 min</strong></div>
+            <div class="readout"><span>Día en el ecuador</span><strong id="dayEq">12 h 0 min</strong></div>
+            <div class="readout"><span>Día a 40° S</span><strong id="dayS">9 h 0 min</strong></div>
+          </div>
+          <p class="note" id="tiltNote"><i class="fa-solid fa-lightbulb"></i> <span>Prueba con 0°: sin inclinación, el día dura 12 horas en todo el planeta todo el año, así que no habría estaciones.</span></p>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-icon"><i class="fa-solid fa-compass"></i></div>
+            <div>
+              <h3>Inclinación constante</h3>
+              <span class="key">23,5°</span>
+              <p>El eje apunta siempre hacia la <strong>Estrella Polar</strong>. Lo que cambia durante el año es la posición de la Tierra respecto al Sol.</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-orange"><i class="fa-solid fa-arrow-down"></i></div>
+            <div>
+              <h3>Rayos directos = más calor</h3>
+              <p>Cuando los rayos llegan casi <strong>perpendiculares</strong>, concentran la energía en un área pequeña y calientan más. Cuando llegan <strong>inclinados</strong>, la misma energía se reparte en un área mayor.</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-blue"><i class="fa-regular fa-clock"></i></div>
+            <div>
+              <h3>Días más largos o más cortos</h3>
+              <p>El hemisferio inclinado hacia el Sol tiene días más largos: más horas de luz significan más tiempo para calentarse.</p>
+            </div>
+          </article>
+          <div class="callout">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div><strong>Error frecuente:</strong> las estaciones <u>no</u> se deben a la distancia al Sol. La Tierra está más cerca en enero (perihelio), ¡justo cuando es invierno en el hemisferio norte!</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== DIAPOSITIVA 3 =================== -->
+    <section class="slide" id="s2" role="tabpanel" aria-roledescription="diapositiva" aria-label="3 de 4" hidden>
+      <div class="slide-head">
+        <span class="eyebrow"><i class="fa-solid fa-leaf"></i> Diapositiva 3 · Las estaciones</span>
+        <h1>Solsticios, equinoccios y las cuatro estaciones</h1>
+        <p>A lo largo de la órbita hay cuatro momentos clave que marcan el inicio de cada estación. <strong>Haz clic en cada Tierra</strong> de la órbita para explorar qué ocurre.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="visual">
+          <div class="visual-title">
+            <h2><i class="fa-solid fa-hand-pointer"></i> Órbita interactiva</h2>
+            <div class="segmented" role="group" aria-label="Hemisferio">
+              <button data-hemi="N" aria-pressed="true">Hemisferio norte</button>
+              <button data-hemi="S" aria-pressed="false">Hemisferio sur</button>
+            </div>
+          </div>
+          <svg id="seasonSvg" viewBox="0 0 640 400" role="group" aria-label="Órbita con los solsticios y equinoccios">
+            <g id="seasonArcs"></g>
+            <ellipse cx="320" cy="200" rx="230" ry="118" fill="none" stroke="#b9c8e2" stroke-width="2" stroke-dasharray="6 6"/>
+            <circle cx="320" cy="200" r="60" fill="url(#sunGlow)"/>
+            <circle cx="320" cy="200" r="36" fill="url(#sunGrad)"/>
+            <text x="320" y="205" text-anchor="middle" font-size="13" font-weight="800" fill="#92400e">Sol</text>
+            <g id="seasonPositions"></g>
+          </svg>
+          <div class="controls">
+            <button class="btn" id="seasonPrev" aria-label="Posición anterior"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="btn btn-primary" id="seasonPlay"><i class="fa-solid fa-play"></i><span>Recorrer el año</span></button>
+            <button class="btn" id="seasonNext" aria-label="Posición siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+          <p class="note"><i class="fa-solid fa-circle-info"></i> Observa que el eje (línea roja) apunta siempre hacia el mismo lado. Las fechas pueden variar un día según el año.</p>
+        </div>
+
+        <div class="cards" aria-live="polite">
+          <article class="card" style="display:block">
+            <div class="pos-title">
+              <div class="card-icon ic-sun" id="posIcon"><i class="fa-solid fa-sun"></i></div>
+              <div>
+                <h3 id="posName">Solsticio de junio</h3>
+                <span id="posDate">20–21 de junio</span>
+              </div>
+            </div>
+          </article>
+          <div class="hemi-cards">
+            <div class="hemi focus" id="hemiN">
+              <div class="lbl"><i class="fa-solid fa-arrow-up"></i> Hemisferio norte</div>
+              <div class="season" id="seasonN"></div>
+              <p id="descN"></p>
+            </div>
+            <div class="hemi" id="hemiS">
+              <div class="lbl"><i class="fa-solid fa-arrow-down"></i> Hemisferio sur</div>
+              <div class="season" id="seasonS"></div>
+              <p id="descS"></p>
+            </div>
+          </div>
+          <article class="card">
+            <div class="card-icon"><i class="fa-solid fa-list-check"></i></div>
+            <ul class="facts" id="posFacts"></ul>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-green"><i class="fa-solid fa-cloud-sun-rain"></i></div>
+            <div>
+              <h3>¿Y cerca del ecuador?</h3>
+              <p>En la <strong>zona intertropical</strong> el Sol siempre llega muy alto y el día dura casi 12 h todo el año. Allí las estaciones casi no se notan: se habla de <mark>temporada de lluvias</mark> y <mark>temporada seca</mark>.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== DIAPOSITIVA 4 =================== -->
+    <section class="slide" id="s3" role="tabpanel" aria-roledescription="diapositiva" aria-label="4 de 4" hidden>
+      <div class="slide-head">
+        <span class="eyebrow"><i class="fa-solid fa-graduation-cap"></i> Diapositiva 4 · Repaso</span>
+        <h1>El año en una línea y autoevaluación</h1>
+        <p>Toca los íconos de la línea del tiempo para recordar los momentos clave de la traslación y luego pon a prueba lo aprendido.</p>
+      </div>
+
+      <div class="timeline">
+        <div class="visual-title">
+          <h2><i class="fa-solid fa-timeline" style="color:var(--primary)"></i> Un año de traslación: estaciones en cada hemisferio</h2>
+        </div>
+        <div class="tl-row" style="margin-bottom:2px"><span></span>
+          <div class="tl-months"><span>Ene</span><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dic</span></div>
+        </div>
+        <div class="tl-row"><span>HN</span><div class="tl-band" id="bandN"></div></div>
+        <div class="tl-row"><span>HS</span><div class="tl-band" id="bandS"></div></div>
+        <div class="tl-markers" id="tlMarkers"></div>
+        <div class="tl-info" id="tlInfo" aria-live="polite"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="quiz" id="quiz"></div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-icon"><i class="fa-solid fa-rotate"></i></div>
+            <div>
+              <h3>Traslación</h3>
+              <p>Vuelta de la Tierra alrededor del Sol en <strong>365 días y 6 h</strong>, siguiendo una órbita elíptica a ≈ 30 km/s.</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-orange"><i class="fa-solid fa-compass-drafting"></i></div>
+            <div>
+              <h3>Causa de las estaciones</h3>
+              <p>La <strong>inclinación de 23,5°</strong> del eje cambia el ángulo de los rayos solares y la duración del día en cada hemisferio.</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-blue"><i class="fa-solid fa-arrows-left-right"></i></div>
+            <div>
+              <h3>Hemisferios opuestos</h3>
+              <p>Cuando en el norte es verano, en el sur es invierno, y viceversa. Primavera y otoño también se intercambian.</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-icon ic-sun"><i class="fa-solid fa-calendar-day"></i></div>
+            <div>
+              <h3>Fechas clave</h3>
+              <p><strong>Solsticios:</strong> 21 jun y 21 dic (día más largo / más corto).<br><strong>Equinoccios:</strong> 20 mar y 22 sep (día = noche).</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="deck-footer">
+    <button class="btn btn-nav" id="prevBtn"><i class="fa-solid fa-arrow-left"></i><span class="txt">Anterior</span></button>
+    <div class="footer-mid">
+      <div class="dots" id="dots"></div>
+      <span class="counter" id="counter">Diapositiva 1 de 4</span>
+    </div>
+    <button class="btn btn-primary btn-nav" id="nextBtn"><span class="txt">Siguiente</span><i class="fa-solid fa-arrow-right"></i></button>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const el = (tag, attrs = {}, parent) => {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const fmt = (n, d = 1) => n.toLocaleString("es", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const rad = d => d * Math.PI / 180;
+  const deg = r => r * 180 / Math.PI;
+
+  /* ================= NAVEGACIÓN ================= */
+  const slides = $$(".slide");
+  const tabs = $$(".tab");
+  const dotsWrap = $("#dots");
+  const total = slides.length;
+  let current = 0;
+  const visited = new Set([0]);
+
+  slides.forEach((_, i) => {
+    const d = document.createElement("button");
+    d.className = "dot";
+    d.setAttribute("aria-label", `Ir a la diapositiva ${i + 1}`);
+    d.addEventListener("click", () => go(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = $$(".dot");
+
+  function go(i) {
+    if (i < 0 || i >= total || i === current) return;
+    const back = i < current;
+    slides[current].classList.remove("active", "from-left");
+    slides[current].hidden = true;
+    current = i;
+    visited.add(i);
+    const s = slides[current];
+    s.hidden = false;
+    s.classList.toggle("from-left", back);
+    s.classList.add("active");
+    updateNav();
+    onSlideChange();
+    window.scrollTo({ top: Math.max(0, $(".deck").offsetTop - 12), behavior: "smooth" });
+  }
+
+  function updateNav() {
+    tabs.forEach((t, i) => {
+      t.setAttribute("aria-selected", i === current);
+      t.classList.toggle("done", visited.has(i) && i !== current);
+    });
+    dots.forEach((d, i) => d.classList.toggle("active", i === current));
+    $("#progressBar").style.width = ((current + 1) / total * 100) + "%";
+    $("#counter").textContent = `Diapositiva ${current + 1} de ${total}`;
+    $("#prevBtn").disabled = current === 0;
+    const next = $("#nextBtn");
+    next.disabled = current === total - 1;
+  }
+
+  tabs.forEach(t => t.addEventListener("click", () => go(+t.dataset.go)));
+  $("#prevBtn").addEventListener("click", () => go(current - 1));
+  $("#nextBtn").addEventListener("click", () => go(current + 1));
+  document.addEventListener("keydown", e => {
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input") return;
+    if (e.key === "ArrowRight" || e.key === "PageDown") go(current + 1);
+    if (e.key === "ArrowLeft" || e.key === "PageUp") go(current - 1);
+  });
+
+  // Deslizar en pantallas táctiles (fuera de los componentes interactivos)
+  let tx = null, ty = null;
+  $(".stage").addEventListener("touchstart", e => {
+    if (e.target.closest("svg, input, .quiz, .tl-markers")) { tx = null; return; }
+    tx = e.touches[0].clientX; ty = e.touches[0].clientY;
+  }, { passive: true });
+  $(".stage").addEventListener("touchend", e => {
+    if (tx === null) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) go(current + (dx < 0 ? 1 : -1));
+    tx = null;
+  }, { passive: true });
+
+  function onSlideChange() {
+    if (current === 0 && orbit.playing) orbit.start(); else orbit.stop();
+    if (current !== 2) seasons.stopPlay();
+  }
+
+  /* ================= DIAPOSITIVA 1: ÓRBITA ================= */
+  const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  const MLEN = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const YEAR = 365.25;
+  const PERI_DOY = 2; // 3 de enero (día 0 = 1 de enero)
+
+  function dateFromDoy(doy) {
+    let d = Math.floor(((doy % 365) + 365) % 365);
+    for (let m = 0; m < 12; m++) {
+      if (d < MLEN[m]) return `${d + 1} de ${MONTHS[m]}`;
+      d -= MLEN[m];
+    }
+    return "31 de diciembre";
+  }
+  function kepler(M, e) {
+    let E = M;
+    for (let i = 0; i < 8; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    return E;
+  }
+
+  const orbit = (() => {
+    const svg = $("#orbitSvg");
+    const back = $("#orbitBack"), front = $("#orbitFront"), sunLayer = $("#sunLayer");
+    const cx = 300, cy = 168, a = 240, eVis = 0.22, sq = 0.55;
+    const b = a * Math.sqrt(1 - eVis * eVis);
+    const c = a * eVis;
+    const sunX = cx - c, sunY = cy;
+    const E_REAL = 0.0167;
+
+    const pos = M => {
+      const E = kepler(M, eVis);
+      return { x: cx - a * Math.cos(E), y: cy + b * sq * Math.sin(E), front: Math.sin(E) };
+    };
+
+    // Trazo de la órbita
+    let d = "";
+    for (let i = 0; i <= 120; i++) {
+      const E = i / 120 * Math.PI * 2;
+      d += (i ? "L" : "M") + (cx - a * Math.cos(E)).toFixed(1) + "," + (cy + b * sq * Math.sin(E)).toFixed(1);
+    }
+    el("path", { d: d + "Z", fill: "rgba(37,99,235,.05)", stroke: "#9fb4d8", "stroke-width": 2, "stroke-dasharray": "5 6" }, back);
+
+    // Flechas de sentido
+    [0.18, 0.62].forEach(t => {
+      const p1 = pos(t * 2 * Math.PI), p2 = pos((t + 0.02) * 2 * Math.PI);
+      el("line", { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, stroke: "#93a8cc", "stroke-width": 2, "marker-end": "url(#arrowHead)" }, back);
+    });
+
+    // Sol
+    el("circle", { cx: sunX, cy: sunY, r: 58, fill: "url(#sunGlow)" }, sunLayer);
+    el("circle", { cx: sunX, cy: sunY, r: 32, fill: "url(#sunGrad)" }, sunLayer);
+    const st = el("text", { x: sunX, y: sunY + 5, "text-anchor": "middle", "font-size": 13, "font-weight": 800, fill: "#92400e" }, sunLayer);
+    st.textContent = "Sol";
+
+    // Perihelio y afelio
+    const label = (x, y, txt, anchor, sub) => {
+      const t = el("text", { x, y, "text-anchor": anchor, "font-size": 12, "font-weight": 700, fill: "#334155" }, back);
+      t.textContent = txt;
+      const s = el("text", { x, y: y + 15, "text-anchor": anchor, "font-size": 11, "font-weight": 600, fill: "#64748b" }, back);
+      s.textContent = sub;
+    };
+    el("circle", { cx: cx - a, cy, r: 4, fill: "#2563eb" }, back);
+    el("circle", { cx: cx + a, cy, r: 4, fill: "#2563eb" }, back);
+    label(cx - a + 10, cy + 24, "Perihelio", "start", "≈ 3 ene · 147,1 M km");
+    label(cx + a - 10, cy - 36, "Afelio", "end", "≈ 4 jul · 152,1 M km");
+
+    // Marcas de solsticios y equinoccios
+    [[79, "20 mar"], [171, "21 jun"], [265, "22 sep"], [354, "21 dic"]].forEach(([doy, txt]) => {
+      const M = ((doy - PERI_DOY) / YEAR) * 2 * Math.PI;
+      const p = pos(M);
+      const layer = p.front > 0 ? back : back;
+      el("circle", { cx: p.x, cy: p.y, r: 3.5, fill: "#fff", stroke: "#64748b", "stroke-width": 1.5 }, layer);
+      const off = p.y > cy ? 22 : -12;
+      const t = el("text", { x: p.x, y: p.y + off, "text-anchor": "middle", "font-size": 11, "font-weight": 700, fill: "#475569" }, layer);
+      t.textContent = txt;
+    });
+
+    // Tierra
+    const earth = el("g", {});
+    el("circle", { r: 15, fill: "url(#earthGrad)", stroke: "#1e40af", "stroke-width": 1.5 }, earth);
+    const night = el("path", { d: "M0,-15 A15,15 0 0 1 0,15 Z", fill: "#0f1c3d", opacity: .45 }, earth);
+    el("line", { x1: 0, y1: -22, x2: 0, y2: 22, stroke: "#dc2626", "stroke-width": 2, "stroke-linecap": "round", transform: "rotate(23.5)" }, earth);
+    const et = el("text", { y: 34, "text-anchor": "middle", "font-size": 12, "font-weight": 800, fill: "#1e3a8a" }, earth);
+    et.textContent = "Tierra";
+    const trail = el("path", { fill: "none", stroke: "#2563eb", "stroke-width": 3, "stroke-linecap": "round", opacity: .35 }, back);
+
+    const state = { t: 0, playing: true, speed: 40, raf: null, last: null };
+
+    function render() {
+      const M = (state.t % 1) * 2 * Math.PI;
+      const p = pos(M);
+      const scale = 1 + 0.18 * p.front;
+      const ang = deg(Math.atan2(sunY - p.y, sunX - p.x)) + 180;
+      night.setAttribute("transform", `rotate(${ang.toFixed(1)})`);
+      earth.setAttribute("transform", `translate(${p.x.toFixed(1)},${p.y.toFixed(1)}) scale(${scale.toFixed(3)})`);
+      (p.front > 0 ? front : back).appendChild(earth);
+
+      // Estela de los últimos ~30 días
+      let td = "";
+      for (let i = 0; i <= 20; i++) {
+        const q = pos(M - (i / 20) * (30 / YEAR) * 2 * Math.PI);
+        td += (i ? "L" : "M") + q.x.toFixed(1) + "," + q.y.toFixed(1);
+      }
+      trail.setAttribute("d", td);
+
+      const Er = kepler(M, E_REAL);
+      const r = 1 - E_REAL * Math.cos(Er);
+      $("#roDate").textContent = dateFromDoy(PERI_DOY + state.t * YEAR);
+      $("#roDist").textContent = fmt(149.6 * r) + " M km";
+      $("#roVel").textContent = fmt(29.78 * Math.sqrt(2 / r - 1)) + " km/s";
+    }
+
+    function frame(ts) {
+      if (state.last != null) state.t += ((ts - state.last) / 1000) * state.speed / YEAR;
+      state.last = ts;
+      render();
+      state.raf = requestAnimationFrame(frame);
+    }
+
+    return {
+      get playing() { return state.playing; },
+      start() { if (!state.raf) { state.last = null; state.raf = requestAnimationFrame(frame); } },
+      stop() { cancelAnimationFrame(state.raf); state.raf = null; },
+      setPlaying(v) {
+        state.playing = v;
+        const btn = $("#playBtn");
+        btn.setAttribute("aria-pressed", v);
+        btn.innerHTML = v ? '<i class="fa-solid fa-pause"></i><span>Pausar</span>' : '<i class="fa-solid fa-play"></i><span>Reproducir</span>';
+        v && current === 0 ? this.start() : this.stop();
+      },
+      reset() { state.t = 0; render(); },
+      setSpeed(v) { state.speed = v; },
+      render
+    };
+  })();
+
+  $("#playBtn").addEventListener("click", () => orbit.setPlaying(!orbit.playing));
+  $("#resetBtn").addEventListener("click", () => orbit.reset());
+  $("#speedRange").addEventListener("input", e => {
+    orbit.setSpeed(+e.target.value);
+    $("#speedOut").textContent = e.target.value + " d/s";
+  });
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) orbit.setPlaying(false);
+  orbit.render();
+  orbit.start();
+
+  /* ================= DIAPOSITIVA 2: INCLINACIÓN ================= */
+  const tilt = (() => {
+    const ECX = 340, ECY = 180, R = 112;
+    const inner = $("#tiltGroupInner"), outer = $("#tiltGroupOuter"), rays = $("#rays");
+    const state = { tilt: 23.5, sign: 1 };
+
+    // Rayos paralelos
+    for (let y = 70; y <= 290; y += 36) {
+      const dx = Math.sqrt(Math.max(0, R * R - (y - ECY) ** 2));
+      const x2 = ECX - dx - 6;
+      el("line", { x1: 50, y1: y, x2: Math.max(60, x2), y2: y, stroke: "#f59e0b", "stroke-width": 2, "stroke-dasharray": "2 5", "marker-end": "url(#rayHead)", opacity: .9 }, rays);
+    }
+
+    function dayLength(latDeg, decDeg) {
+      const x = -Math.tan(rad(latDeg)) * Math.tan(rad(decDeg));
+      if (x <= -1) return 24;
+      if (x >= 1) return 0;
+      return 2 * deg(Math.acos(x)) / 15;
+    }
+    const hm = h => {
+      let H = Math.floor(h), m = Math.round((h - H) * 60);
+      if (m === 60) { H++; m = 0; }
+      return `${H} h ${m} min`;
+    };
+
+    function render() {
+      const dec = state.tilt * state.sign;
+      const rot = -dec;
+      inner.innerHTML = "";
+      outer.innerHTML = "";
+      const gi = el("g", { transform: `rotate(${rot} ${ECX} ${ECY})` }, inner);
+      const go = el("g", { transform: `rotate(${rot} ${ECX} ${ECY})` }, outer);
+
+      const lines = [{ lat: 0, name: "Ecuador", color: "#ffffff", w: 2.4, dash: "" }];
+      if (state.tilt > 0) {
+        lines.push(
+          { lat: state.tilt, name: "Trópico de Cáncer", color: "#fde68a", w: 1.6, dash: "6 4" },
+          { lat: -state.tilt, name: "Trópico de Capricornio", color: "#fde68a", w: 1.6, dash: "6 4" },
+          { lat: 90 - state.tilt, name: "Círculo polar ártico", color: "#bfe3ff", w: 1.4, dash: "3 4" },
+          { lat: -(90 - state.tilt), name: "Círculo polar antártico", color: "#bfe3ff", w: 1.4, dash: "3 4" }
+        );
+      }
+      lines.forEach(L => {
+        const y = ECY - R * Math.sin(rad(L.lat));
+        const hw = R * Math.cos(rad(L.lat));
+        el("line", { x1: ECX - hw, y1: y, x2: ECX + hw, y2: y, stroke: L.color, "stroke-width": L.w, "stroke-dasharray": L.dash }, gi);
+      });
+      // Continentes estilizados
+      el("ellipse", { cx: ECX - 30, cy: ECY - 45, rx: 34, ry: 22, fill: "#4ade80", opacity: .55 }, gi);
+      el("ellipse", { cx: ECX + 25, cy: ECY + 40, rx: 22, ry: 32, fill: "#4ade80", opacity: .55 }, gi);
+
+      // Eje y polos
+      el("line", { x1: ECX, y1: ECY - R - 36, x2: ECX, y2: ECY + R + 36, stroke: "#dc2626", "stroke-width": 3, "stroke-linecap": "round" }, go);
+      const n = el("text", { x: ECX, y: ECY - R - 42, "text-anchor": "middle", "font-size": 14, "font-weight": 800, fill: "#dc2626" }, go);
+      n.textContent = "N";
+      const s = el("text", { x: ECX, y: ECY + R + 54, "text-anchor": "middle", "font-size": 14, "font-weight": 800, fill: "#dc2626" }, go);
+      s.textContent = "S";
+      // Etiqueta del ecuador
+      const eq = el("text", { x: ECX + R + 8, y: ECY + 4, "font-size": 11, "font-weight": 700, fill: "#334155" }, go);
+      eq.textContent = "Ecuador";
+      if (state.tilt >= 6) {
+        const tc = el("text", { x: ECX + R * Math.cos(rad(state.tilt)) + 8, y: ECY - R * Math.sin(rad(state.tilt)) + 4, "font-size": 10.5, "font-weight": 600, fill: "#92400e" }, go);
+        tc.textContent = "Tróp. Cáncer";
+        const tp = el("text", { x: ECX + R * Math.cos(rad(state.tilt)) + 8, y: ECY + R * Math.sin(rad(state.tilt)) + 4, "font-size": 10.5, "font-weight": 600, fill: "#92400e" }, go);
+        tp.textContent = "Tróp. Capricornio";
+      }
+
+      const hemi = dec > 0 ? "N" : dec < 0 ? "S" : "";
+      $("#subsolarLabel").textContent = dec === 0 ? "Sol cenital: ecuador (0°)" : `Sol cenital: ${fmt(Math.abs(dec))}° ${hemi}`;
+
+      $("#dayN").textContent = hm(dayLength(40, dec));
+      $("#dayEq").textContent = hm(dayLength(0, dec));
+      $("#dayS").textContent = hm(dayLength(-40, dec));
+      $("#tiltOut").textContent = fmt(state.tilt) + "°";
+
+      const note = $("#tiltNote span");
+      if (state.tilt === 0) note.textContent = "Sin inclinación, el Sol siempre estaría sobre el ecuador y el día duraría 12 h en todas partes todo el año: no habría estaciones.";
+      else if (state.sign === 0) note.textContent = "En los equinoccios el eje no se inclina ni hacia el Sol ni en sentido contrario: día y noche duran 12 h en todo el planeta.";
+      else if (state.sign > 0) note.textContent = "El polo norte se inclina hacia el Sol: verano en el hemisferio norte (días largos) e invierno en el sur (días cortos).";
+      else note.textContent = "El polo sur se inclina hacia el Sol: verano en el hemisferio sur (días largos) e invierno en el norte (días cortos).";
+    }
+
+    return {
+      setTilt(v) { state.tilt = v; $("#tiltRange").value = v; render(); },
+      setSign(v) { state.sign = v; render(); },
+      render
+    };
+  })();
+
+  $("#tiltRange").addEventListener("input", e => tilt.setTilt(+e.target.value));
+  $("#tiltReal").addEventListener("click", () => tilt.setTilt(23.5));
+  $("#tiltZero").addEventListener("click", () => tilt.setTilt(0));
+  $$("[data-dec]").forEach(b => b.addEventListener("click", () => {
+    $$("[data-dec]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    tilt.setSign(+b.dataset.dec);
+  }));
+  tilt.render();
+
+  /* ================= DIAPOSITIVA 3: ESTACIONES ================= */
+  const SEASON = {
+    pri: { name: "Primavera", icon: "fa-seedling", color: "#16a34a", cls: "ic-green" },
+    ver: { name: "Verano", icon: "fa-sun", color: "#ea580c", cls: "ic-orange" },
+    oto: { name: "Otoño", icon: "fa-leaf", color: "#b45309", cls: "ic-brown" },
+    inv: { name: "Invierno", icon: "fa-snowflake", color: "#0284c7", cls: "ic-blue" }
+  };
+  const POSITIONS = [
+    {
+      id: "mar", theta: 90, short: "20 mar", name: "Equinoccio de marzo", date: "20–21 de marzo", icon: "fa-scale-balanced", cls: "",
+      N: ["pri", "Comienza la primavera. Los días empiezan a ser más largos que las noches."],
+      S: ["oto", "Comienza el otoño. Las noches empiezan a ser más largas que los días."],
+      facts: [["fa-sun", "El Sol cae vertical sobre el <strong>ecuador</strong>."], ["fa-clock", "Día y noche duran <strong>12 horas</strong> en todo el planeta."], ["fa-arrows-left-right", "El eje no apunta ni hacia el Sol ni en contra."]]
+    },
+    {
+      id: "jun", theta: 180, short: "21 jun", name: "Solsticio de junio", date: "20–21 de junio", icon: "fa-sun", cls: "ic-sun",
+      N: ["ver", "Comienza el verano. Es el día más largo del año."],
+      S: ["inv", "Comienza el invierno. Es la noche más larga del año."],
+      facts: [["fa-sun", "El Sol cae vertical sobre el <strong>Trópico de Cáncer</strong> (23,5° N)."], ["fa-moon", "En el Polo Norte hay <strong>sol de medianoche</strong>: 24 h de luz."], ["fa-arrow-left", "El polo norte se inclina <strong>hacia</strong> el Sol."]]
+    },
+    {
+      id: "sep", theta: 270, short: "22 sep", name: "Equinoccio de septiembre", date: "22–23 de septiembre", icon: "fa-scale-balanced", cls: "",
+      N: ["oto", "Comienza el otoño. Los días se acortan cada vez más."],
+      S: ["pri", "Comienza la primavera. Los días se alargan cada vez más."],
+      facts: [["fa-sun", "El Sol vuelve a caer vertical sobre el <strong>ecuador</strong>."], ["fa-clock", "Día y noche vuelven a durar <strong>12 horas</strong> en todo el planeta."], ["fa-arrows-left-right", "El eje queda de lado respecto al Sol."]]
+    },
+    {
+      id: "dic", theta: 360, short: "21 dic", name: "Solsticio de diciembre", date: "21–22 de diciembre", icon: "fa-snowflake", cls: "ic-blue",
+      N: ["inv", "Comienza el invierno. Es la noche más larga del año."],
+      S: ["ver", "Comienza el verano. Es el día más largo del año."],
+      facts: [["fa-sun", "El Sol cae vertical sobre el <strong>Trópico de Capricornio</strong> (23,5° S)."], ["fa-moon", "En el Polo Sur hay <strong>24 h de luz</strong>; en el Polo Norte, 24 h de noche."], ["fa-arrow-right", "El polo sur se inclina <strong>hacia</strong> el Sol."]]
+    }
+  ];
+
+  const seasons = (() => {
+    const CX = 320, CY = 200, RX = 230, RY = 118;
+    const arcs = $("#seasonArcs"), group = $("#seasonPositions");
+    const pt = (th, k = 1) => ({ x: CX + RX * k * Math.cos(rad(th)), y: CY - RY * k * Math.sin(rad(th)) });
+    const state = { sel: 1, hemi: "N", timer: null };
+    const nodes = [];
+
+    // Arcos de estación por hemisferio (Mar→Jun, Jun→Sep, Sep→Dic, Dic→Mar)
+    const ARC_N = ["pri", "ver", "oto", "inv"], ARC_S = ["oto", "inv", "pri", "ver"];
+    const arcEls = [], arcLbls = [];
+    for (let q = 0; q < 4; q++) {
+      const t0 = 90 + q * 90 + 6, t1 = 180 + q * 90 - 6;
+      let d = "";
+      for (let i = 0; i <= 30; i++) {
+        const p = pt(t0 + (t1 - t0) * i / 30);
+        d += (i ? "L" : "M") + p.x.toFixed(1) + "," + p.y.toFixed(1);
+      }
+      arcEls.push(el("path", { d, fill: "none", "stroke-width": 12, "stroke-linecap": "round", opacity: .3 }, arcs));
+      const m = pt(135 + q * 90, 1.17);
+      const t = el("text", { x: m.x, y: m.y + 4, "text-anchor": "middle", "font-size": 13, "font-weight": 800 }, arcs);
+      arcLbls.push(t);
+    }
+
+    POSITIONS.forEach((P, i) => {
+      const p = pt(P.theta);
+      const g = el("g", { class: "orbit-pos", tabindex: 0, role: "button", "aria-label": P.name }, group);
+      el("circle", { class: "ring", cx: p.x, cy: p.y, r: 38, fill: "rgba(37,99,235,.12)", stroke: "#2563eb", "stroke-width": 2.5 }, g);
+      el("circle", { cx: p.x, cy: p.y, r: 26, fill: "url(#earthGrad)", stroke: "#1e40af", "stroke-width": 1.5 }, g);
+      const ang = deg(Math.atan2(CY - p.y, CX - p.x)) + 180;
+      el("path", { d: `M${p.x},${p.y - 26} A26,26 0 0 1 ${p.x},${p.y + 26} Z`, fill: "#0f1c3d", opacity: .45, transform: `rotate(${ang} ${p.x} ${p.y})` }, g);
+      el("line", { x1: p.x - 26, y1: p.y, x2: p.x + 26, y2: p.y, stroke: "#fff", "stroke-width": 1.5, opacity: .8, transform: `rotate(23.5 ${p.x} ${p.y})` }, g);
+      el("line", { x1: p.x, y1: p.y - 38, x2: p.x, y2: p.y + 38, stroke: "#dc2626", "stroke-width": 2.5, "stroke-linecap": "round", transform: `rotate(23.5 ${p.x} ${p.y})` }, g);
+      const n = el("text", { x: p.x, y: p.y - 42, "text-anchor": "middle", "font-size": 10, "font-weight": 800, fill: "#dc2626", transform: `rotate(23.5 ${p.x} ${p.y})` }, g);
+      n.textContent = "N";
+      const below = P.theta === 270, above = P.theta === 90;
+      const lx = p.x + (P.theta === 180 ? -2 : P.theta === 360 ? 2 : 0);
+      const ly = below ? p.y + 58 : above ? p.y - 52 : p.y + 62;
+      const lbl = el("text", { x: lx, y: ly, "text-anchor": "middle", "font-size": 13, "font-weight": 800, fill: "#1e293b" }, g);
+      lbl.textContent = P.short;
+      g.addEventListener("click", () => { stopPlay(); select(i); });
+      g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); stopPlay(); select(i); } });
+      nodes.push(g);
+    });
+
+    // Flecha de sentido de giro
+    const a1 = pt(220), a2 = pt(232);
+    el("line", { x1: a1.x, y1: a1.y, x2: a2.x, y2: a2.y, stroke: "#93a8cc", "stroke-width": 2, "marker-end": "url(#arrowHead)" }, arcs);
+    const b1 = pt(40), b2 = pt(52);
+    el("line", { x1: b1.x, y1: b1.y, x2: b2.x, y2: b2.y, stroke: "#93a8cc", "stroke-width": 2, "marker-end": "url(#arrowHead)" }, arcs);
+
+    function paintArcs() {
+      const list = state.hemi === "N" ? ARC_N : ARC_S;
+      list.forEach((k, q) => {
+        arcEls[q].setAttribute("stroke", SEASON[k].color);
+        arcLbls[q].setAttribute("fill", SEASON[k].color);
+        arcLbls[q].textContent = SEASON[k].name;
+      });
+    }
+
+    function hemiHtml(k) {
+      const s = SEASON[k];
+      return `<i class="fa-solid ${s.icon}" style="color:${s.color}"></i> <span style="color:${s.color}">${s.name}</span>`;
+    }
+
+    function select(i) {
+      state.sel = (i + 4) % 4;
+      const P = POSITIONS[state.sel];
+      nodes.forEach((n, j) => n.classList.toggle("selected", j === state.sel));
+      $("#posName").textContent = P.name;
+      $("#posDate").textContent = P.date;
+      const ic = $("#posIcon");
+      ic.className = "card-icon " + P.cls;
+      ic.innerHTML = `<i class="fa-solid ${P.icon}"></i>`;
+      $("#seasonN").innerHTML = hemiHtml(P.N[0]);
+      $("#descN").textContent = P.N[1];
+      $("#seasonS").innerHTML = hemiHtml(P.S[0]);
+      $("#descS").textContent = P.S[1];
+      $("#posFacts").innerHTML = P.facts.map(([ic, t]) => `<li><i class="fa-solid ${ic}"></i><span>${t}</span></li>`).join("");
+    }
+
+    function setHemi(h) {
+      state.hemi = h;
+      $("#hemiN").classList.toggle("focus", h === "N");
+      $("#hemiS").classList.toggle("focus", h === "S");
+      paintArcs();
+    }
+
+    function stopPlay() {
+      clearInterval(state.timer);
+      state.timer = null;
+      $("#seasonPlay").innerHTML = '<i class="fa-solid fa-play"></i><span>Recorrer el año</span>';
+    }
+    function togglePlay() {
+      if (state.timer) return stopPlay();
+      select(state.sel + 1);
+      state.timer = setInterval(() => select(state.sel + 1), 2600);
+      $("#seasonPlay").innerHTML = '<i class="fa-solid fa-pause"></i><span>Detener</span>';
+    }
+
+    paintArcs();
+    select(1);
+    return { select, setHemi, togglePlay, stopPlay, get sel() { return state.sel; } };
+  })();
+
+  $$("[data-hemi]").forEach(b => b.addEventListener("click", () => {
+    $$("[data-hemi]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    seasons.setHemi(b.dataset.hemi);
+  }));
+  $("#seasonPrev").addEventListener("click", () => { seasons.stopPlay(); seasons.select(seasons.sel - 1); });
+  $("#seasonNext").addEventListener("click", () => { seasons.stopPlay(); seasons.select(seasons.sel + 1); });
+  $("#seasonPlay").addEventListener("click", () => seasons.togglePlay());
+
+  /* ================= DIAPOSITIVA 4: LÍNEA DEL TIEMPO ================= */
+  (() => {
+    const pct = d => (d / 365 * 100);
+    // Días (0 = 1 ene): 20 mar = 78, 21 jun = 171, 22 sep = 264, 21 dic = 354
+    const cuts = [0, 78, 171, 264, 354, 365];
+    const N = ["inv", "pri", "ver", "oto", "inv"], S = ["ver", "oto", "inv", "pri", "ver"];
+    const fill = (wrap, list) => list.forEach((k, i) => {
+      const d = document.createElement("div");
+      d.className = "s-" + k;
+      d.style.width = pct(cuts[i + 1] - cuts[i]) + "%";
+      d.textContent = (cuts[i + 1] - cuts[i]) > 30 ? SEASON[k].name : "";
+      d.title = SEASON[k].name;
+      wrap.appendChild(d);
+    });
+    fill($("#bandN"), N);
+    fill($("#bandS"), S);
+
+    const marks = [
+      { day: 2, icon: "fa-arrows-to-dot", sun: true, t: "3 de enero · Perihelio", d: "La Tierra está en el punto más cercano al Sol (147,1 millones de km) y viaja más rápido (30,3 km/s). ¡Y en el norte es invierno!" },
+      { day: 78, icon: "fa-scale-balanced", t: "20 de marzo · Equinoccio", d: "Día y noche iguales en todo el planeta. Primavera en el norte, otoño en el sur." },
+      { day: 171, icon: "fa-sun", t: "21 de junio · Solsticio", d: "Día más largo en el norte (verano) y más corto en el sur (invierno). Sol cenital en el Trópico de Cáncer." },
+      { day: 184, icon: "fa-arrows-left-right-to-line", sun: true, t: "4 de julio · Afelio", d: "La Tierra está en el punto más lejano del Sol (152,1 millones de km) y viaja más lento (29,3 km/s). ¡Y en el norte es verano!" },
+      { day: 264, icon: "fa-scale-balanced", t: "22 de septiembre · Equinoccio", d: "Día y noche vuelven a igualarse. Otoño en el norte, primavera en el sur." },
+      { day: 354, icon: "fa-snowflake", t: "21 de diciembre · Solsticio", d: "Día más corto en el norte (invierno) y más largo en el sur (verano). Sol cenital en el Trópico de Capricornio." }
+    ];
+    const wrap = $("#tlMarkers"), info = $("#tlInfo");
+    const btns = marks.map((m, i) => {
+      const b = document.createElement("button");
+      b.className = "tl-marker" + (m.sun ? " sun" : "");
+      b.style.left = pct(m.day) + "%";
+      b.innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
+      b.setAttribute("aria-label", m.t);
+      b.title = m.t;
+      b.addEventListener("click", () => show(i));
+      wrap.appendChild(b);
+      return b;
+    });
+    function show(i) {
+      btns.forEach((b, j) => b.setAttribute("aria-pressed", i === j));
+      const m = marks[i];
+      info.innerHTML = `<div class="card-icon ${m.sun ? "ic-sun" : ""}" style="width:38px;height:38px;font-size:15px"><i class="fa-solid ${m.icon}"></i></div><div><strong>${m.t}</strong>${m.d}</div>`;
+    }
+    show(0);
+  })();
+
+  /* ================= DIAPOSITIVA 4: CUESTIONARIO ================= */
+  (() => {
+    const Q = [
+      { q: "¿Cuánto tarda la Tierra en completar una vuelta alrededor del Sol?", o: ["24 horas", "Unos 30 días", "365 días y unas 6 horas", "12 meses exactos de 30 días"], a: 2, e: "Una traslación dura unos 365 días y 6 horas. Esas horas extra dan origen al año bisiesto cada 4 años." },
+      { q: "¿Cuál es la causa principal de las estaciones del año?", o: ["La distancia variable entre la Tierra y el Sol", "La inclinación de 23,5° del eje terrestre", "La rotación de la Tierra sobre su eje", "Los cambios en la actividad del Sol"], a: 1, e: "La inclinación del eje hace que cada hemisferio reciba los rayos solares con distinto ángulo y durante más o menos horas." },
+      { q: "En diciembre, ¿qué estación comienza en el hemisferio sur?", o: ["Invierno", "Primavera", "Otoño", "Verano"], a: 3, e: "En el solsticio de diciembre el polo sur se inclina hacia el Sol: comienza el verano en el sur y el invierno en el norte." },
+      { q: "¿Qué ocurre durante un equinoccio?", o: ["El día y la noche duran casi lo mismo en todo el planeta", "Hay 24 horas de noche en el Polo Norte", "La Tierra alcanza su punto más cercano al Sol", "El Sol cae vertical sobre el Trópico de Cáncer"], a: 0, e: "En los equinoccios el Sol cae vertical sobre el ecuador y el día y la noche duran unas 12 horas en todas partes." },
+      { q: "¿En qué mes está la Tierra más cerca del Sol (perihelio)?", o: ["Julio", "Enero", "Junio", "Septiembre"], a: 1, e: "El perihelio ocurre a inicios de enero, cuando es invierno en el hemisferio norte. ¡Prueba de que la distancia no causa las estaciones!" }
+    ];
+    const box = $("#quiz");
+    let i = 0, score = 0, results = [];
+
+    function steps() {
+      return `<div class="q-steps">${Q.map((_, j) => `<span class="${results[j] === true ? "ok" : results[j] === false ? "bad" : j === i ? "cur" : ""}"></span>`).join("")}</div>`;
+    }
+
+    function render() {
+      if (i >= Q.length) return renderResult();
+      const it = Q[i];
+      box.innerHTML = `
+        <div class="quiz-top">
+          <h2><i class="fa-solid fa-circle-question"></i> Autoevaluación</h2>
+          <span class="score">Pregunta ${i + 1} de ${Q.length} · <i class="fa-solid fa-star"></i> ${score}</span>
+        </div>
+        ${steps()}
+        <p class="q-text">${it.q}</p>
+        <div class="options">${it.o.map((t, j) => `<button class="option" data-j="${j}"><span class="letter">${"ABCD"[j]}</span><span>${t}</span></button>`).join("")}</div>
+        <div class="feedback" role="status"></div>
+        <div class="quiz-actions"><button class="btn btn-primary" id="qNext" hidden>${i === Q.length - 1 ? "Ver resultado" : "Siguiente pregunta"} <i class="fa-solid fa-arrow-right"></i></button></div>`;
+      $$(".option", box).forEach(b => b.addEventListener("click", () => answer(+b.dataset.j)));
+      $("#qNext", box).addEventListener("click", () => { i++; render(); });
+    }
+
+    function answer(j) {
+      const it = Q[i], ok = j === it.a;
+      if (ok) score++;
+      results[i] = ok;
+      $$(".option", box).forEach((b, k) => {
+        b.disabled = true;
+        if (k === it.a) b.classList.add("correct");
+        else if (k === j) b.classList.add("wrong");
+      });
+      const fb = $(".feedback", box);
+      fb.className = "feedback show " + (ok ? "ok" : "bad");
+      fb.innerHTML = `<i class="fa-solid ${ok ? "fa-circle-check" : "fa-circle-xmark"}"></i><div><strong>${ok ? "¡Correcto!" : "No es correcto."}</strong> ${it.e}</div>`;
+      $(".q-steps", box).outerHTML = steps();
+      $(".score", box).innerHTML = `Pregunta ${i + 1} de ${Q.length} · <i class="fa-solid fa-star"></i> ${score}`;
+      const nb = $("#qNext", box);
+      nb.hidden = false;
+      nb.focus();
+    }
+
+    function renderResult() {
+      const msg = score === Q.length ? "¡Excelente! Dominas la traslación y las estaciones."
+        : score >= 3 ? "¡Muy bien! Repasa las preguntas que fallaste."
+        : "Vuelve a explorar las diapositivas 2 y 3 e inténtalo de nuevo.";
+      box.innerHTML = `
+        <div class="quiz-top"><h2><i class="fa-solid fa-trophy"></i> Resultado</h2></div>
+        ${steps()}
+        <div class="result">
+          <div class="big">${score}/${Q.length}</div>
+          <p>${msg}</p>
+          <button class="btn btn-primary" id="qRetry"><i class="fa-solid fa-rotate-right"></i> Intentar de nuevo</button>
+        </div>`;
+      $("#qRetry", box).addEventListener("click", () => { i = 0; score = 0; results = []; render(); });
+    }
+
+    render();
+  })();
+
+  updateNav();
+})();
+</script>
+</body>
+</html>
